@@ -205,6 +205,8 @@ final class DownloadManager: ObservableObject {
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false
         panel.canCreateDirectories = true
+        panel.prompt = "选择目录"
+        panel.message = "请选择下载文件保存位置"
         panel.directoryURL = downloadDirectory
         if panel.runModal() == .OK, let url = panel.url {
             downloadDirectory = url
@@ -213,7 +215,7 @@ final class DownloadManager: ObservableObject {
     }
 
     func enqueue(info: BiliVideoInfo, page: BiliPage, quality: BiliQualityOption) {
-        let pageTitle: String? = info.pages.count > 1 ? "P\(page.page) \(page.part)" : nil
+        let pageTitle: String? = info.pages.count > 1 ? "第\(page.page)集 \(page.part)" : nil
         let item = DownloadTaskItem(
             bvid: info.bvid,
             cid: page.cid,
@@ -695,10 +697,10 @@ final class DownloadManager: ObservableObject {
         let videoAsset = AVURLAsset(url: videoURL)
         let audioAsset = AVURLAsset(url: audioURL)
 
-        let videoTracks = try await videoAsset.loadTracks(withMediaType: .video)
-        guard let sourceVideoTrack = videoTracks.first,
+        guard let videoTracks = try? await videoAsset.loadTracks(withMediaType: .video),
+              let sourceVideoTrack = videoTracks.first,
               let compVideoTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-            throw BiliError.streamUnavailable("Invalid video track")
+            throw BiliError.streamUnavailable("视频轨道无效")
         }
 
         let videoDuration = try await videoAsset.load(.duration)
@@ -714,7 +716,7 @@ final class DownloadManager: ObservableObject {
         try? FileManager.default.removeItem(at: outputURL)
 
         guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetPassthrough) else {
-            throw BiliError.streamUnavailable("Export session unavailable")
+            throw BiliError.streamUnavailable("无法创建混流会话")
         }
 
         exportSession.outputURL = outputURL
@@ -727,7 +729,7 @@ final class DownloadManager: ObservableObject {
             throw error
         }
         guard exportSession.status == .completed else {
-            throw BiliError.streamUnavailable("Mux failed (\(exportSession.status.rawValue))")
+            throw BiliError.streamUnavailable("合成失败 (\(exportSession.status.rawValue))")
         }
     }
 

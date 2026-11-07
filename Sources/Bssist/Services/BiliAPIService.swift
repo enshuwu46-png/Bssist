@@ -9,11 +9,11 @@ enum BiliError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidInput:
-            return "Invalid URL / BV"
+            return "无效的视频链接或 BV 号"
         case .videoNotFound(let msg):
-            return msg.isEmpty ? "Not Found" : msg
+            return msg.isEmpty ? "未找到该视频" : msg
         case .streamUnavailable(let msg):
-            return msg.isEmpty ? "Stream Unavailable" : msg
+            return msg.isEmpty ? "无法获取视频流" : msg
         case .networkError(let err):
             return err.localizedDescription
         }
@@ -43,7 +43,7 @@ final class BiliAPIService {
 
     private let qualityLabels: [Int: String] = [
         127: "8K",
-        126: "Dolby",
+        126: "杜比视界",
         125: "HDR",
         120: "4K",
         116: "1080P60",
@@ -381,7 +381,7 @@ final class BiliAPIService {
                     BiliQualityOption(
                         id: "audio-only",
                         qn: 0,
-                        label: "M4A",
+                        label: "仅音频",
                         videoStream: nil,
                         audioStream: bestAudio,
                         directMP4URL: nil,
@@ -399,7 +399,7 @@ final class BiliAPIService {
            let urlStr = first["url"] as? String,
            let mp4URL = URL(string: urlStr) {
             let qn = dataObj["quality"] as? Int ?? 64
-            let label = qualityLabels[qn] ?? "MP4"
+            let label = qualityLabels[qn] ?? "高清"
             options.append(
                 BiliQualityOption(
                     id: "mp4-\(qn)",
@@ -415,7 +415,7 @@ final class BiliAPIService {
         }
 
         if options.isEmpty {
-            throw BiliError.streamUnavailable("No playable streams")
+            throw BiliError.streamUnavailable("无可用视频流")
         }
 
         return options

@@ -30,9 +30,9 @@ struct TaskRowView: View {
                         Text(item.quality.label)
                             .font(.system(size: 10, weight: .medium, design: .monospaced))
                             .foregroundStyle(.secondary)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1.5)
-                            .background(Color.primary.opacity(0.07), in: RoundedRectangle(cornerRadius: 4))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .liquidGlassPill(cornerRadius: 5)
                     }
 
                     progressTrack
@@ -40,20 +40,19 @@ struct TaskRowView: View {
 
                 Divider()
                     .frame(height: 22)
-                    .opacity(0.4)
+                    .opacity(0.35)
 
                 actionButtons
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
-            .background(Color.primary.opacity(isHovering ? 0.035 : 0.0))
+            .background(Color.primary.opacity(isHovering ? 0.04 : 0.0))
         }
         .onHover { hovering in
             isHovering = hovering
         }
     }
 
-    // Shadowrocket-style left status indicator dot/icon
     @ViewBuilder
     private var statusIndicator: some View {
         switch item.status {
@@ -105,15 +104,15 @@ struct TaskRowView: View {
             }
         }
         .frame(width: 44, height: 28)
-        .clipShape(RoundedRectangle(cornerRadius: 4))
+        .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
     }
 
     @ViewBuilder
     private var telemetryLabel: some View {
         switch item.status {
         case .queued:
-            Text("0%")
-                .font(.system(size: 10.5, design: .monospaced))
+            Text("排队中")
+                .font(.system(size: 10.5))
                 .foregroundStyle(.tertiary)
         case .downloading(let progress, let speedBps):
             HStack(spacing: 6) {
@@ -125,23 +124,24 @@ struct TaskRowView: View {
             .foregroundStyle(.secondary)
         case .paused(let progress):
             HStack(spacing: 4) {
-                Image(systemName: "pause.fill")
-                    .font(.system(size: 8))
+                Text("已暂停")
+                    .font(.system(size: 10.5))
+                Text("·")
                 Text(String(format: "%.0f%%", progress * 100))
                     .font(.system(size: 10.5, design: .monospaced))
             }
             .foregroundStyle(.secondary)
         case .muxing:
-            Text("MUX")
-                .font(.system(size: 10.5, design: .monospaced))
+            Text("合成中")
+                .font(.system(size: 10.5))
                 .foregroundStyle(.secondary)
         case .completed:
-            Text(item.bvid)
-                .font(.system(size: 10.5, design: .monospaced))
+            Text("已完成")
+                .font(.system(size: 10.5))
                 .foregroundStyle(.tertiary)
         case .failed(let msg):
             Text(msg)
-                .font(.system(size: 10, design: .monospaced))
+                .font(.system(size: 10))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
@@ -154,7 +154,7 @@ struct TaskRowView: View {
                 Capsule()
                     .fill(Color.primary.opacity(0.08))
                 Capsule()
-                    .fill(Color.primary.opacity(item.status.isPaused ? 0.35 : 0.8))
+                    .fill(Color.primary.opacity(item.status.isPaused ? 0.35 : 0.82))
                     .frame(width: max(0, geo.size.width * CGFloat(item.status.currentProgress)))
             }
         }
@@ -163,16 +163,17 @@ struct TaskRowView: View {
 
     @ViewBuilder
     private var actionButtons: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 5) {
             if item.status.isRunning || item.status == .queued || item.status.isPaused {
                 Button(action: onTogglePause) {
                     Image(systemName: item.status.isPaused ? "play.fill" : "pause.fill")
                         .font(.system(size: 10.5, weight: .medium))
                         .foregroundStyle(.primary)
-                        .frame(width: 24, height: 24)
-                        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 5))
+                        .frame(width: 26, height: 24)
+                        .liquidGlassPill(cornerRadius: 6)
                 }
                 .buttonStyle(.plain)
+                .help(item.status.isPaused ? "继续下载" : "暂停下载")
             }
 
             if case .completed(let url) = item.status {
@@ -182,10 +183,11 @@ struct TaskRowView: View {
                     Image(systemName: "folder")
                         .font(.system(size: 10.5, weight: .medium))
                         .foregroundStyle(.secondary)
-                        .frame(width: 24, height: 24)
-                        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 5))
+                        .frame(width: 26, height: 24)
+                        .liquidGlassPill(cornerRadius: 6)
                 }
                 .buttonStyle(.plain)
+                .help("在访达中显示")
             }
 
             if case .failed = item.status {
@@ -193,19 +195,22 @@ struct TaskRowView: View {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 10.5, weight: .medium))
                         .foregroundStyle(.secondary)
-                        .frame(width: 24, height: 24)
-                        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 5))
+                        .frame(width: 26, height: 24)
+                        .liquidGlassPill(cornerRadius: 6)
                 }
                 .buttonStyle(.plain)
+                .help("重试下载")
             }
 
             Button(action: onRemove) {
                 Image(systemName: "xmark")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.tertiary)
-                    .frame(width: 22, height: 24)
+                    .frame(width: 24, height: 24)
+                    .liquidGlassPill(cornerRadius: 6)
             }
             .buttonStyle(.plain)
+            .help("移除任务")
         }
     }
 

@@ -8,7 +8,7 @@ struct AuthPopoverView: View {
 
     @State private var qrImage: NSImage?
     @State private var qrKey: String?
-    @State private var qrStatusText: String = "请使用哔哩哔哩 App 扫码登录"
+    @State private var qrStatusText: String = "请使用哔哩哔哩客户端扫码登录"
     @State private var isLoading = false
     @State private var pollTask: Task<Void, Never>?
     @State private var manualCookieInput = ""
@@ -18,135 +18,153 @@ struct AuthPopoverView: View {
     private let filter = CIFilter.qrCodeGenerator()
 
     var body: some View {
-        VStack(spacing: 12) {
-            if !sessdata.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "person.crop.circle.badge.checkmark")
-                        .font(.system(size: 26, weight: .light))
-                        .foregroundStyle(.primary)
-
-                    HStack(spacing: 5) {
-                        Text(accountInfo?.uname ?? "已登录")
-                            .font(.system(size: 12, weight: .medium))
+        LiquidGlassGroup(spacing: 12) {
+            VStack(spacing: 14) {
+                if !sessdata.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "person.crop.circle.badge.checkmark")
+                            .font(.system(size: 28, weight: .light))
                             .foregroundStyle(.primary)
-                            .lineLimit(1)
 
-                        if accountInfo?.isVIP == true {
-                            Text("VIP")
-                                .font(.system(size: 9.5, weight: .semibold, design: .monospaced))
-                                .foregroundStyle(Color(nsColor: .windowBackgroundColor))
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, 1)
-                                .background(Color.primary, in: RoundedRectangle(cornerRadius: 3))
+                        HStack(spacing: 6) {
+                            Text(accountInfo?.uname ?? "已登录")
+                                .font(.system(size: 12.5, weight: .medium))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+
+                            if accountInfo?.isVIP == true {
+                                Text("大会员")
+                                    .font(.system(size: 9.5, weight: .semibold))
+                                    .foregroundStyle(Color(nsColor: .windowBackgroundColor))
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 1.5)
+                                    .background(Color.primary, in: RoundedRectangle(cornerRadius: 4))
+                            }
                         }
-                    }
 
-                    Button {
-                        sessdata = ""
-                        UserDefaults.standard.removeObject(forKey: "Bssist.sessdata")
-                        startQRFlow()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "rectangle.portrait.and.arrow.right")
-                                .font(.system(size: 10.5, weight: .medium))
-                            Text("退出登录")
-                                .font(.system(size: 11))
-                        }
-                        .padding(.horizontal, 12)
-                        .frame(height: 26)
-                        .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
-                    }
-                    .buttonStyle(.plain)
-                }
-                .frame(width: 176, height: 150)
-            } else if showManualInput {
-                VStack(spacing: 10) {
-                    Text("粘贴 SESSDATA / Cookie")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.secondary)
-
-                    TextField("SESSDATA", text: $manualCookieInput)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 11, design: .monospaced))
-                        .padding(8)
-                        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
-
-                    HStack(spacing: 8) {
                         Button {
-                            showManualInput = false
+                            sessdata = ""
+                            UserDefaults.standard.removeObject(forKey: "Bssist.sessdata")
                             startQRFlow()
                         } label: {
-                            Image(systemName: "qrcode")
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 26)
-                                .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                            HStack(spacing: 5) {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                                    .font(.system(size: 10.5, weight: .medium))
+                                Text("退出登录")
+                                    .font(.system(size: 11.5, weight: .medium))
+                            }
+                            .padding(.horizontal, 14)
+                            .frame(height: 28)
+                            .liquidGlassPill(cornerRadius: 8)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .frame(width: 186, height: 156)
+                } else if showManualInput {
+                    VStack(spacing: 10) {
+                        Text("粘贴凭据 (SESSDATA)")
+                            .font(.system(size: 11.5, weight: .medium))
+                            .foregroundStyle(.secondary)
+
+                        TextField("在此粘贴 SESSDATA", text: $manualCookieInput)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 11, design: .monospaced))
+                            .padding(8)
+                            .liquidGlassSection(cornerRadius: 8)
+
+                        HStack(spacing: 8) {
+                            Button {
+                                showManualInput = false
+                                startQRFlow()
+                            } label: {
+                                Text("返回扫码")
+                                    .font(.system(size: 11, weight: .medium))
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 28)
+                                    .liquidGlassPill(cornerRadius: 7)
+                            }
+                            .buttonStyle(.plain)
+
+                            Button {
+                                let cleaned = manualCookieInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if !cleaned.isEmpty {
+                                    sessdata = cleaned
+                                    UserDefaults.standard.set(cleaned, forKey: "Bssist.sessdata")
+                                    dismiss()
+                                }
+                            } label: {
+                                Text("确认")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(Color(nsColor: .windowBackgroundColor))
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 28)
+                                    .liquidGlassPill(cornerRadius: 7, isProminent: true)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .frame(width: 186)
+                } else {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.white)
+                            .frame(width: 150, height: 150)
+
+                        if let qrImage {
+                            Image(nsImage: qrImage)
+                                .interpolation(.none)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 134, height: 134)
+                        } else {
+                            ProgressView()
+                                .controlSize(.small)
+                        }
+                    }
+
+                    Text(qrStatusText)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+
+                    HStack(spacing: 10) {
+                        Button {
+                            startQRFlow()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 10, weight: .medium))
+                                Text("刷新")
+                                    .font(.system(size: 11))
+                            }
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 10)
+                            .frame(height: 26)
+                            .liquidGlassPill(cornerRadius: 7)
                         }
                         .buttonStyle(.plain)
 
                         Button {
-                            let cleaned = manualCookieInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                            if !cleaned.isEmpty {
-                                sessdata = cleaned
-                                UserDefaults.standard.set(cleaned, forKey: "Bssist.sessdata")
-                                dismiss()
-                            }
+                            pollTask?.cancel()
+                            showManualInput = true
                         } label: {
-                            Image(systemName: "checkmark")
-                                .foregroundStyle(Color(nsColor: .windowBackgroundColor))
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 26)
-                                .background(Color.primary, in: RoundedRectangle(cornerRadius: 6))
+                            HStack(spacing: 4) {
+                                Image(systemName: "key")
+                                    .font(.system(size: 10, weight: .medium))
+                                Text("凭据")
+                                    .font(.system(size: 11))
+                            }
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 10)
+                            .frame(height: 26)
+                            .liquidGlassPill(cornerRadius: 7)
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                .frame(width: 176)
-            } else {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.white)
-                        .frame(width: 148, height: 148)
-
-                    if let qrImage {
-                        Image(nsImage: qrImage)
-                            .interpolation(.none)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 132, height: 132)
-                    } else {
-                        ProgressView()
-                            .controlSize(.small)
-                    }
-                }
-
-                Text(qrStatusText)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-
-                HStack(spacing: 14) {
-                    Button {
-                        startQRFlow()
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        pollTask?.cancel()
-                        showManualInput = true
-                    } label: {
-                        Image(systemName: "key")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                }
             }
+            .padding(16)
         }
-        .padding(16)
         .onAppear {
             if sessdata.isEmpty && !showManualInput {
                 startQRFlow()
@@ -161,7 +179,7 @@ struct AuthPopoverView: View {
         pollTask?.cancel()
         isLoading = true
         qrImage = nil
-        qrStatusText = "请使用哔哩哔哩 App 扫码登录"
+        qrStatusText = "请使用哔哩哔哩客户端扫码登录"
 
         pollTask = Task {
             do {
@@ -212,6 +230,6 @@ struct AuthPopoverView: View {
         guard let outputImage = filter.outputImage else { return nil }
         let transformed = outputImage.transformed(by: CGAffineTransform(scaleX: 8, y: 8))
         guard let cgImage = context.createCGImage(transformed, from: transformed.extent) else { return nil }
-        return NSImage(cgImage: cgImage, size: NSSize(width: 132, height: 132))
+        return NSImage(cgImage: cgImage, size: NSSize(width: 134, height: 134))
     }
 }

@@ -19,23 +19,29 @@ struct ContentView: View {
     @State private var showAuthPopover = false
 
     var body: some View {
-        VStack(spacing: 12) {
-            statusHeaderCard
-                .padding(.horizontal, 14)
-                .padding(.top, 12)
+        ZStack {
+            WindowVisualEffectBackdrop()
+                .ignoresSafeArea()
 
-            inputAndNodeGroupCard
-                .padding(.horizontal, 14)
+            LiquidGlassGroup(spacing: 12) {
+                VStack(spacing: 12) {
+                    statusHeaderCard
+                        .padding(.horizontal, 14)
+                        .padding(.top, 12)
 
-            taskGroupCard
-                .padding(.horizontal, 14)
+                    inputAndNodeGroupCard
+                        .padding(.horizontal, 14)
 
-            bottomStatusBar
-                .padding(.horizontal, 16)
-                .padding(.bottom, 10)
+                    taskGroupCard
+                        .padding(.horizontal, 14)
+
+                    bottomStatusBar
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 10)
+                }
+            }
         }
-        .frame(minWidth: 500, minHeight: 500)
-        .background(Color(nsColor: .underPageBackgroundColor).opacity(0.45))
+        .frame(minWidth: 520, minHeight: 520)
         .onAppear {
             verifyAccountStatus()
         }
@@ -45,15 +51,15 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - 1. Shadowrocket-Style Top Status & Login Prompt Card
+    // MARK: - 1. 顶部状态与总控卡片 (Liquid Glass)
 
     private var statusHeaderCard: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.primary.opacity(0.9))
-                        .frame(width: 34, height: 34)
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .fill(Color.primary.opacity(0.88))
+                        .frame(width: 36, height: 36)
 
                     BiliTVIcon(size: 20)
                         .foregroundStyle(Color(nsColor: .windowBackgroundColor))
@@ -74,7 +80,7 @@ struct ContentView: View {
                         Text("↓ \(formatSpeed(downloadManager.totalSpeedBps))")
                         if downloadManager.activeCount > 0 || downloadManager.pausedCount > 0 {
                             Text("·")
-                            Text("\(downloadManager.activeCount)/\(downloadManager.tasks.count)")
+                            Text("进行中 \(downloadManager.activeCount)/\(downloadManager.tasks.count)")
                         }
                     }
                     .font(.system(size: 10.5, design: .monospaced))
@@ -94,11 +100,16 @@ struct ContentView: View {
                                 downloadManager.resumeAll()
                             }
                         } label: {
-                            Image(systemName: hasRunning ? "pause.fill" : "play.fill")
-                                .font(.system(size: 11, weight: .medium))
-                                .foregroundStyle(.primary)
-                                .frame(width: 30, height: 28)
-                                .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                            HStack(spacing: 4) {
+                                Image(systemName: hasRunning ? "pause.fill" : "play.fill")
+                                    .font(.system(size: 10, weight: .medium))
+                                Text(hasRunning ? "全部暂停" : "全部继续")
+                                    .font(.system(size: 11, weight: .medium))
+                            }
+                            .foregroundStyle(.primary)
+                            .padding(.horizontal, 10)
+                            .frame(height: 28)
+                            .liquidGlassPill(cornerRadius: 8)
                         }
                         .buttonStyle(.plain)
                     }
@@ -107,14 +118,19 @@ struct ContentView: View {
                 Button {
                     downloadManager.selectDownloadDirectory()
                 } label: {
-                    Image(systemName: "folder")
-                        .font(.system(size: 11.5, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 30, height: 28)
-                        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                    HStack(spacing: 4) {
+                        Image(systemName: "folder")
+                            .font(.system(size: 11, weight: .medium))
+                        Text("目录")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .frame(height: 28)
+                    .liquidGlassPill(cornerRadius: 8)
                 }
                 .buttonStyle(.plain)
-                .help(downloadManager.downloadDirectory.path)
+                .help("保存位置：\(downloadManager.downloadDirectory.path)")
 
                 Button {
                     showAuthPopover.toggle()
@@ -123,17 +139,15 @@ struct ContentView: View {
                         Image(systemName: sessdata.isEmpty ? "qrcode" : "person.fill")
                             .font(.system(size: 11, weight: .medium))
 
-                        if let info = accountInfo {
-                            Text(info.uname)
-                                .font(.system(size: 11, weight: .medium))
-                                .lineLimit(1)
-                                .frame(maxWidth: 72)
-                        }
+                        Text(accountInfo?.uname ?? "账号")
+                            .font(.system(size: 11, weight: .medium))
+                            .lineLimit(1)
+                            .frame(maxWidth: 72)
                     }
                     .foregroundStyle(sessdata.isEmpty ? .secondary : .primary)
-                    .padding(.horizontal, 9)
+                    .padding(.horizontal, 10)
                     .frame(height: 28)
-                    .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+                    .liquidGlassPill(cornerRadius: 8)
                 }
                 .buttonStyle(.plain)
                 .popover(isPresented: $showAuthPopover, arrowEdge: .bottom) {
@@ -143,9 +157,9 @@ struct ContentView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
 
-            // Prominent Bilibili Login Prompt Bar when not logged in
+            // 未登录提示栏
             if sessdata.isEmpty {
-                Divider().opacity(0.4)
+                Divider().opacity(0.35)
 
                 Button {
                     showAuthPopover = true
@@ -157,7 +171,7 @@ struct ContentView: View {
                             .frame(width: 16)
 
                         Text("登录哔哩哔哩账号以解锁 1080P60 / 4K / 8K 高清画质")
-                            .font(.system(size: 11.5, weight: .regular))
+                            .font(.system(size: 11.5))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
 
@@ -170,9 +184,9 @@ struct ContentView: View {
                                 .font(.system(size: 10.5, weight: .semibold))
                         }
                         .foregroundStyle(Color(nsColor: .windowBackgroundColor))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3.5)
-                        .background(Color.primary.opacity(0.88), in: RoundedRectangle(cornerRadius: 5))
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 4)
+                        .liquidGlassPill(cornerRadius: 6, isProminent: true)
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
@@ -181,17 +195,10 @@ struct ContentView: View {
                 .buttonStyle(.plain)
             }
         }
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(nsColor: .controlBackgroundColor))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
-        )
+        .liquidGlassSection(cornerRadius: 14)
     }
 
-    // MARK: - 2. Shadowrocket-Style Grouped Input & Stream Node Selector Card
+    // MARK: - 2. 链接解析与节点选择栏目 (Liquid Glass)
 
     private var inputAndNodeGroupCard: some View {
         VStack(spacing: 0) {
@@ -201,9 +208,9 @@ struct ContentView: View {
                     .foregroundStyle(.tertiary)
                     .frame(width: 16)
 
-                TextField("BV / URL", text: $urlInput)
+                TextField("输入或粘贴视频链接 / BV号", text: $urlInput)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 12.5, design: .monospaced))
+                    .font(.system(size: 12.5))
                     .onSubmit {
                         resolveInput()
                     }
@@ -221,6 +228,7 @@ struct ContentView: View {
                             .foregroundStyle(.tertiary)
                     }
                     .buttonStyle(.plain)
+                    .help("清空输入")
                 }
 
                 Button {
@@ -229,13 +237,19 @@ struct ContentView: View {
                         resolveInput()
                     }
                 } label: {
-                    Image(systemName: "doc.on.clipboard")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 24, height: 22)
-                        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 5))
+                    HStack(spacing: 4) {
+                        Image(systemName: "doc.on.clipboard")
+                            .font(.system(size: 10, weight: .medium))
+                        Text("粘贴")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .frame(height: 24)
+                    .liquidGlassPill(cornerRadius: 6)
                 }
                 .buttonStyle(.plain)
+                .help("粘贴剪贴板链接并立即解析")
 
                 Button {
                     resolveInput()
@@ -244,27 +258,28 @@ struct ContentView: View {
                         if isResolving {
                             ProgressView().controlSize(.mini)
                         } else {
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: 10.5, weight: .semibold))
+                            Text("解析")
+                                .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(Color(nsColor: .windowBackgroundColor))
                         }
                     }
-                    .frame(width: 26, height: 22)
-                    .background(Color.primary.opacity(isResolving ? 0.12 : 0.88), in: RoundedRectangle(cornerRadius: 5))
+                    .padding(.horizontal, 10)
+                    .frame(height: 24)
+                    .liquidGlassPill(cornerRadius: 6, isProminent: !isResolving)
                 }
                 .buttonStyle(.plain)
                 .disabled(urlInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isResolving)
             }
             .padding(.horizontal, 12)
-            .frame(height: 38)
+            .frame(height: 40)
 
             if let error = errorMessage {
-                Divider().opacity(0.4)
+                Divider().opacity(0.35)
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.circle")
                         .font(.system(size: 11))
                     Text(error)
-                        .font(.system(size: 11, design: .monospaced))
+                        .font(.system(size: 11))
                         .lineLimit(1)
                     Spacer()
                     Button {
@@ -281,18 +296,11 @@ struct ContentView: View {
             }
 
             if let video = currentVideo {
-                Divider().opacity(0.4)
+                Divider().opacity(0.35)
                 resolvedVideoSection(for: video)
             }
         }
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(nsColor: .controlBackgroundColor))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
-        )
+        .liquidGlassSection(cornerRadius: 14)
     }
 
     private func resolvedVideoSection(for video: BiliVideoInfo) -> some View {
@@ -311,7 +319,7 @@ struct ContentView: View {
                     }
                 }
                 .frame(width: 64, height: 40)
-                .clipShape(RoundedRectangle(cornerRadius: 5))
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(video.title)
@@ -320,15 +328,13 @@ struct ContentView: View {
                         .lineLimit(1)
 
                     HStack(spacing: 6) {
-                        Text(video.bvid)
                         if !video.ownerName.isEmpty {
-                            Text("·")
                             Text(video.ownerName).lineLimit(1)
+                            Text("·")
                         }
-                        Text("·")
-                        Text(formatDuration(video.duration))
+                        Text("时长 \(formatDuration(video.duration))")
                     }
-                    .font(.system(size: 10.5, design: .monospaced))
+                    .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
                 }
 
@@ -337,14 +343,16 @@ struct ContentView: View {
                 Button {
                     triggerDownload(for: video)
                 } label: {
-                    Image(systemName: "arrow.down")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(Color(nsColor: .windowBackgroundColor))
-                        .frame(width: 30, height: 30)
-                        .background(
-                            Color.primary.opacity(selectedQuality == nil || selectedPageIDs.isEmpty ? 0.25 : 0.9),
-                            in: RoundedRectangle(cornerRadius: 7)
-                        )
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.down")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text("下载")
+                            .font(.system(size: 11.5, weight: .semibold))
+                    }
+                    .foregroundStyle(Color(nsColor: .windowBackgroundColor))
+                    .padding(.horizontal, 12)
+                    .frame(height: 30)
+                    .liquidGlassPill(cornerRadius: 8, isProminent: true)
                 }
                 .buttonStyle(.plain)
                 .disabled(selectedQuality == nil || selectedPageIDs.isEmpty)
@@ -352,13 +360,14 @@ struct ContentView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
 
-            Divider().opacity(0.4)
+            Divider().opacity(0.35)
 
+            // 画质选择行
             HStack(spacing: 8) {
-                Image(systemName: "point.3.connected.trianglepath.dotted")
-                    .font(.system(size: 10.5))
+                Text("画质")
+                    .font(.system(size: 10.5, weight: .medium))
                     .foregroundStyle(.tertiary)
-                    .frame(width: 16)
+                    .frame(width: 26, alignment: .leading)
 
                 if isLoadingQualities {
                     ProgressView().controlSize(.mini)
@@ -387,19 +396,16 @@ struct ContentView: View {
                                         }
 
                                         Text(option.label)
-                                            .font(.system(size: 10.5, weight: isSelected ? .semibold : .regular, design: .monospaced))
+                                            .font(.system(size: 10.5, weight: isSelected ? .semibold : .regular))
                                             .foregroundStyle(
                                                 isSelected
                                                     ? Color(nsColor: .windowBackgroundColor)
                                                     : (option.requiresAuth ? .secondary : .primary)
                                             )
                                     }
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 5)
-                                            .fill(isSelected ? Color.primary : Color.primary.opacity(option.requiresAuth ? 0.03 : 0.06))
-                                    )
+                                    .padding(.horizontal, 9)
+                                    .padding(.vertical, 4.5)
+                                    .liquidGlassPill(cornerRadius: 6, isSelected: isSelected)
                                 }
                                 .buttonStyle(.plain)
                                 .help(option.requiresAuth ? "点击扫码登录解锁该画质" : option.label)
@@ -411,8 +417,9 @@ struct ContentView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
 
+            // 多分集选择行
             if video.pages.count > 1 {
-                Divider().opacity(0.4)
+                Divider().opacity(0.35)
                 HStack(spacing: 8) {
                     Button {
                         if selectedPageIDs.count == video.pages.count {
@@ -423,15 +430,16 @@ struct ContentView: View {
                             selectedPageIDs = Set(video.pages.map(\.cid))
                         }
                     } label: {
-                        Image(systemName: selectedPageIDs.count == video.pages.count ? "checkmark.square.fill" : "square")
-                            .font(.system(size: 11))
+                        Text(selectedPageIDs.count == video.pages.count ? "全选" : "分集")
+                            .font(.system(size: 10.5, weight: .medium))
                             .foregroundStyle(.secondary)
-                            .frame(width: 16)
+                            .frame(width: 26, alignment: .leading)
                     }
                     .buttonStyle(.plain)
+                    .help("点击全选或取消全选")
 
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 5) {
+                        HStack(spacing: 6) {
                             ForEach(video.pages) { page in
                                 let isSelected = selectedPageIDs.contains(page.cid)
                                 Button {
@@ -441,15 +449,12 @@ struct ContentView: View {
                                         selectedPageIDs.insert(page.cid)
                                     }
                                 } label: {
-                                    Text("P\(page.page)")
-                                        .font(.system(size: 10, weight: isSelected ? .semibold : .regular, design: .monospaced))
+                                    Text("第\(page.page)集")
+                                        .font(.system(size: 10, weight: isSelected ? .semibold : .regular))
                                         .foregroundStyle(isSelected ? Color(nsColor: .windowBackgroundColor) : .secondary)
-                                        .padding(.horizontal, 7)
-                                        .padding(.vertical, 3)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 4)
-                                                .fill(isSelected ? Color.primary.opacity(0.85) : Color.primary.opacity(0.05))
-                                        )
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .liquidGlassPill(cornerRadius: 6, isSelected: isSelected)
                                 }
                                 .buttonStyle(.plain)
                                 .help(page.part)
@@ -463,16 +468,18 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - 3. Shadowrocket-Style Grouped Task List Card
+    // MARK: - 3. 下载队列栏目 (Liquid Glass)
 
     private var taskGroupCard: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(nsColor: .controlBackgroundColor))
-
             if downloadManager.tasks.isEmpty {
-                BiliTVIcon(size: 28)
-                    .foregroundStyle(.quaternary)
+                VStack(spacing: 8) {
+                    BiliTVIcon(size: 28)
+                        .foregroundStyle(.quaternary)
+                    Text("暂无下载任务")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.quaternary)
+                }
             } else {
                 ScrollView {
                     LazyVStack(spacing: 0) {
@@ -486,22 +493,19 @@ struct ContentView: View {
                             if index < downloadManager.tasks.count - 1 {
                                 Divider()
                                     .padding(.leading, 30)
-                                    .opacity(0.35)
+                                    .opacity(0.3)
                             }
                         }
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
         }
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
-        )
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .liquidGlassSection(cornerRadius: 14)
     }
 
-    // MARK: - 4. Minimalist Bottom Telemetry Bar
+    // MARK: - 4. 底部状态栏
 
     private var bottomStatusBar: some View {
         HStack(spacing: 8) {
@@ -510,15 +514,15 @@ struct ContentView: View {
                 .frame(width: 5, height: 5)
 
             if let info = accountInfo {
-                Text(info.isVIP ? "\(info.uname) · VIP" : info.uname)
-                    .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                Text(info.isVIP ? "已登录：\(info.uname)（大会员）" : "已登录：\(info.uname)")
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.secondary)
             } else {
                 Button {
                     showAuthPopover = true
                 } label: {
-                    Text("未登录 (点击扫码)")
-                        .font(.system(size: 9.5, weight: .medium, design: .monospaced))
+                    Text("未登录（点击扫码）")
+                        .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
@@ -527,8 +531,8 @@ struct ContentView: View {
             Text("·")
                 .foregroundStyle(.quaternary)
 
-            Text(downloadManager.downloadDirectory.lastPathComponent)
-                .font(.system(size: 9.5, design: .monospaced))
+            Text("保存至：\(downloadManager.downloadDirectory.lastPathComponent)")
+                .font(.system(size: 10))
                 .foregroundStyle(.tertiary)
                 .lineLimit(1)
 
@@ -541,9 +545,16 @@ struct ContentView: View {
                 Button {
                     downloadManager.clearCompleted()
                 } label: {
-                    Image(systemName: "trash")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.tertiary)
+                    HStack(spacing: 4) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 9.5))
+                        Text("清理已完成")
+                            .font(.system(size: 10))
+                    }
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .liquidGlassPill(cornerRadius: 5)
                 }
                 .buttonStyle(.plain)
             }
@@ -565,7 +576,6 @@ struct ContentView: View {
                     self.accountInfo = verified
                 }
             } else {
-                // Cookie expired or invalid — clear and prompt user to log in
                 await MainActor.run {
                     self.accountInfo = nil
                     self.sessdata = ""
