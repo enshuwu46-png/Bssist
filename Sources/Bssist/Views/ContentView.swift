@@ -17,6 +17,7 @@ struct ContentView: View {
     @State private var isLoadingQualities = false
 
     @State private var showAuthPopover = false
+    @State private var showEasterEggPopover = false
 
     var body: some View {
         ZStack {
@@ -558,7 +559,39 @@ struct ContentView: View {
                 }
                 .buttonStyle(.plain)
             }
+
+            Button {
+                showEasterEggPopover.toggle()
+            } label: {
+                Circle()
+                    .fill(Color.primary.opacity(0.85))
+                    .frame(width: 6, height: 6)
+                    .padding(4)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .popover(isPresented: $showEasterEggPopover, arrowEdge: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("作者：Eric_Wu")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.primary)
+                    Text("Eric与Eva认识\(friendshipDays)天，我们是永远的最好的朋友！")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+            }
         }
+    }
+
+    private var friendshipDays: Int {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone.current
+        let startComponents = DateComponents(year: 2024, month: 1, day: 30)
+        guard let startDate = calendar.date(from: startComponents) else { return 1012 }
+        let todayStart = calendar.startOfDay(for: Date())
+        return max(0, calendar.dateComponents([.day], from: startDate, to: todayStart).day ?? 1012)
     }
 
     // MARK: - Actions
